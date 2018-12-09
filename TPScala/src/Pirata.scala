@@ -13,7 +13,7 @@ trait Pirata {
     this.poderDeMando() >= 100
   }
   
-  def tomarRonCon(alguien: Pirata)
+  def tomarRonConJack()
   
   def tieneMenosDe20Energia(): Boolean
   
@@ -27,7 +27,7 @@ object Vacio extends Pirata {
   
   override def herido() { energia = 0}
   
-  def tomarRonCon(alguien: Pirata) { energia = 0 }
+  def tomarRonConJack() { energia = 0 }
   
   def tieneMenosDe20Energia(): Boolean = {return false}
 }
@@ -39,49 +39,48 @@ object Jack extends Pirata {
   ingredientes = List("ron") 
   
   override def poderDeMando(): Int ={
-    return poderPelea*energia*inteligencia
+    poderPelea*energia*inteligencia
       
   }
-  override def tomarRonCon(pirata: Pirata)= {
+  def tomarRonCon(pirata: Pirata)= {
     energia += 100
-    pirata.tomarRonCon(Jack)
+    pirata.tomarRonConJack()
   
   }
+  
+  def tomarRonConJack() {}
   override def herido() {
       poderPelea /= 2
       inteligencia /= 2
     }
   
     def tieneMenosDe20Energia(): Boolean = {
-    return energia < 20
+    energia < 20
   }
 }
 
-abstract class PirataComun (_energia: Int) extends Pirata{
+abstract class PirataComun (var energia: Int) extends Pirata{
   
-  var energia: Int = _energia
   
   def perderEnergia() {
     energia -= 50
   }
 
-   def tomarRonCon(jack: Pirata){
+   def tomarRonConJack(){
      perderEnergia()
      
    }
    
    def tieneMenosDe20Energia(): Boolean = {
-    return energia < 20
+     energia < 20
   }
 }
 
-class Guerrero(_energia: Int, _poderPelea: Int, _vitalidad: Int) extends PirataComun (_energia) {
+class Guerrero(_energia: Int, var poderPelea: Int, var vitalidad: Int) extends PirataComun (_energia) {
   
-  var poderPelea: Int = _poderPelea
-  var vitalidad: Int = _vitalidad
   
   override def poderDeMando(): Int = {
-   return poderPelea * vitalidad  
+    poderPelea * vitalidad  
    }
   
   override def herido() {
@@ -91,12 +90,10 @@ class Guerrero(_energia: Int, _poderPelea: Int, _vitalidad: Int) extends PirataC
 }
 
 
-class Navegante(_energia: Int,_inteligencia: Int) extends PirataComun (_energia){
-  
-  var inteligencia: Int = _inteligencia
+class Navegante(_energia: Int, var inteligencia: Int) extends PirataComun (_energia){
   
   override def poderDeMando(): Int = {
-    return inteligencia * inteligencia
+    inteligencia * inteligencia
         
   }
   
@@ -106,14 +103,12 @@ class Navegante(_energia: Int,_inteligencia: Int) extends PirataComun (_energia)
  
 }
 
-class Cocinero(_energia: Int, _moral: Int, _ingredientes: List[String]) extends PirataComun(_energia) {
+class Cocinero(_energia: Int, var moral: Int, _ingredientes: List[String]) extends PirataComun(_energia) {
   
-  var moral: Int = _moral
   ingredientes = _ingredientes
   
-
   override def poderDeMando(): Int = {
-    return moral * ingredientes.size
+    moral * ingredientes.size
  
   }
   
@@ -130,7 +125,7 @@ class Cocinero(_energia: Int, _moral: Int, _ingredientes: List[String]) extends 
   Jack.ingredientes = Jack.ingredientes ::: List(unIngrediente)
   }
   
-  override def tomarRonCon(Jack:Pirata){
+  override def tomarRonConJack(){
     this.perderEnergia()
     this.entregarIngredienteA(Jack:Pirata)
   }
@@ -140,12 +135,11 @@ class Cocinero(_energia: Int, _moral: Int, _ingredientes: List[String]) extends 
   }
 
 
-class Monstruo (_energia: Int, _poderPelea: Int) extends PirataComun (_energia) {
+class Monstruo (_energia: Int, var poderPelea: Int) extends PirataComun (_energia) {
   
-  var poderPelea = _poderPelea
   
   override def poderDeMando(): Int = {
-    return poderPelea
+    poderPelea
     
   }
   
@@ -157,14 +151,8 @@ class Monstruo (_energia: Int, _poderPelea: Int) extends PirataComun (_energia) 
   
 
 
-class Barco(_resistencia: Int, _poderFuego: Int,_municiones: Int, _tripulacion: List[Pirata], _bando: Bando) {
-  
-  var bando = _bando
-  var resistencia: Int = _resistencia
-  var poderFuego: Int = _poderFuego
-  var municiones: Int  = _municiones
-  var tripulacion: List[Pirata] = _tripulacion
-  
+class Barco(var resistencia: Int, var poderFuego: Double, var municiones: Double, var tripulacion: List[Pirata], var bando: Bando) {
+ 
   
   def aplicarBonus() {
     bando.bonus(this)  
@@ -180,7 +168,7 @@ class Barco(_resistencia: Int, _poderFuego: Int,_municiones: Int, _tripulacion: 
   }
   
   def fuerza(): Int = {
-    return this.listaPoderes().sum
+    this.listaPoderes().sum
   }
   
     def tripulacionHerida(): Unit =  {
@@ -215,19 +203,17 @@ class Barco(_resistencia: Int, _poderFuego: Int,_municiones: Int, _tripulacion: 
   
   
   def disparar(otroBarco: Barco, canionazos: Int){
-    if (canionazos <= municiones) {
+    if (canionazos >= municiones) {
+      throw new RuntimeException("Error: se debe tener la misma o mayor cantidad de municiones")
+    }
       municiones = municiones - canionazos
       otroBarco.resistencia - (0.5*canionazos)
-    }
     
-    else {
-      println("Error: se debe tener la misma o mayor cantidad de municiones")
-    }
     
     
   }
   def leGanaA(barco : Barco): Boolean = {
-    return this.fuerza() > barco.fuerza()
+    this.fuerza() > barco.fuerza()
   }
   def enfrentarA(otroBarco: Barco) {
     if(this.leGanaA(otroBarco)) {
@@ -254,7 +240,7 @@ trait Bando{
 object armadaInglesa extends Bando{
   
   override def bonus(barco: Barco) {
-    barco.municiones * 1.30
+    barco.municiones *= 1.30
     
   }
   
@@ -262,7 +248,7 @@ object armadaInglesa extends Bando{
 
 object unionPirata extends Bando {
   override def bonus(barco: Barco) {
-    barco.poderFuego * 1.60
+    barco.poderFuego *= 1.60
   }
   
 }
